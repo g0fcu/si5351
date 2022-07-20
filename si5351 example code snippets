@@ -1,0 +1,41 @@
+Setup in main:
+	Si5351_Si5351(I2C_ADDRESS);
+	i2c_found = Si5351_init(SI5351_CRYSTAL_LOAD_8PF, 0, 0);
+	if (i2c_found != 0)
+		{
+		ErrorHandler();
+		}
+	Si5351_drive_strength(SI5351_CLK0, SI5351_DRIVE_8MA);
+	Si5351_drive_strength(SI5351_CLK2, SI5351_DRIVE_8MA);
+
+Call si5351Tuning(tfreq); to set frequency on CLK0 & CLK2 with 90 degrees phase offset
+
+void si5351Tuning(uint32_t pFreq)
+{
+	extern uint64_t step;
+	uint32_t tune_freq;
+	uint8_t retval = 0;
+	char sfreq[10], x[10];
+	// Tune Si5351 to receive frequency * 4 at 0.01Hz resolution
+	tune_freq = (pFreq) * 100ULL; //use with Tayloe detector
+	//tune_freq = (pFreq * 4) * 100ULL; //use with original set_freq where 4*freq is required
+	//Si5351_set_freq(tune_freq, SI5351_CLK0);
+	retval = Si5351_set_freq(tune_freq, SI5351_CLK0, 0);
+	if(retval != 0)
+	{
+		sprintf(x, "Error setting CLK");
+		gwinSetText(version, x, TRUE);
+	}
+	/*retval = Si5351_set_freq(tune_freq, SI5351_CLK2, 90);
+	if(retval != 0)
+	{
+		sprintf(x, "Error setting CLK2");
+		gwinSetText(version, x, TRUE);
+	}*/
+
+	// Update frequency label
+	sprintf(sfreq, "%lu", pFreq + IFSHIFT); //+ IFShift for 'IF' shift, divide by 2 to get centre freq on waterfall
+	gwinSetText(freqLabel,sfreq, TRUE);
+	//sprintf(x, "%lu", pFreq);
+	//gwinSetText(version, x, TRUE);
+}
